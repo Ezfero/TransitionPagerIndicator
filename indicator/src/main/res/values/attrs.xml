@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<declare-styleable name="TransitionPagerIndicator">
+		<attr name="indicatorColor" format="color" />
+		<attr name="indicatorSize" format="dimension" />
+	</declare-styleable>
+</resources>
