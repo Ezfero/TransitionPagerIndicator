@@ -1,10 +1,12 @@
 package com.silgrid.indicator;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
@@ -14,10 +16,12 @@ import android.view.View;
 
 public class TransitionPagerIndicator extends View implements ViewPager.OnAdapterChangeListener, ViewPager.OnPageChangeListener {
 
-	private int mActivaPage;
+	private int mActivePage;
 	private int mPagerAmount;
 	private int mIndicatorSize;
 	private int mIndicatorsPadding;
+	private int mPreviousActivePage = -1;
+	private int mPreviousScrollOffset = -1;
 	private int mIndicatorColor = Color.WHITE;
 
 	private boolean mAttached;
@@ -25,6 +29,9 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 	private Paint mActivePaint;
 	private Paint mInactivePaint;
 	private ViewPager mViewPager;
+
+	private RectF mAnimatedRect = new RectF();
+	private ValueAnimator mAnimator = new ValueAnimator();
 
 	public TransitionPagerIndicator(Context context) {
 		super(context);
@@ -102,9 +109,13 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 		int cy = canvas.getHeight() / 2;
 
 		for (int i = 0; i < mPagerAmount; ++i) {
-			Paint p = i == mActivaPage ? mActivePaint : mInactivePaint;
+			Paint p = i == mActivePage ? mActivePaint : mInactivePaint;
 			canvas.drawCircle(i * (mIndicatorsPadding + mIndicatorSize) + mIndicatorsPadding / 2,
 					cy, mIndicatorSize / 2, p);
+		}
+
+		if (mAnimatedRect.left != 0 || mAnimatedRect.right != 0) {
+			canvas.drawOval(mAnimatedRect, mActivePaint);
 		}
 	}
 
@@ -116,17 +127,48 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 	@Override
 	public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+		if (mPreviousScrollOffset == -1) {
+			mPreviousScrollOffset = positionOffsetPixels;
+			return;
+		}
+
+			int fromIndex = positionOffsetPixels > mPreviousScrollOffset
+					? position
+					: position + 1;
+			int toIndex = positionOffsetPixels > mPreviousScrollOffset
+					? fromIndex + 1
+					: fromIndex - 1;
+
+		if (positionOffsetPixels == 0) {
+			mPreviousScrollOffset = -1;
+			endTransition(mPreviousActivePage, mActivePage);
+			return;
+		}
+
+		mAnimator.cancel();
+		mAnimatedRect.top = 0;
+		mAnimatedRect.bottom = mAnimatedRect.top + mIndicatorSize;
+		if (fromIndex < toIndex) {
+			mAnimatedRect.left = getLeftSide(fromIndex);
+			mAnimatedRect.right = getRightSide(fromIndex) + (getRightSide(toIndex) - getRightSide(fromIndex)) * positionOffset;
+		} else {
+			mAnimatedRect.left = getLeftSide(fromIndex) - (getLeftSide(fromIndex) - getLeftSide(toIndex)) * (1 - positionOffset);
+			mAnimatedRect.right = getRightSide(fromIndex);
+		}
 		invalidate();
 	}
 
 	@Override
 	public void onPageSelected(int position) {
-		mActivaPage = position;
+		mPreviousActivePage = mActivePage;
+		mActivePage = position;
 	}
 
 	@Override
 	public void onPageScrollStateChanged(int state) {
-
+		if (state == ViewPager.SCROLL_STATE_IDLE || state == ViewPager.SCROLL_STATE_DRAGGING) {
+			mPreviousScrollOffset = -1;
+		}
 	}
 
 	public void setViewPager(ViewPager viewPager) {
@@ -179,6 +221,38 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 	private void removePagerCallbacks(ViewPager pager) {
 		pager.removeOnAdapterChangeListener(this);
 		pager.removeOnPageChangeListener(this);
+	}
+
+	private void endTransition(final int from, final int to) {
+		mAnimator.cancel();
+		mAnimator.removeAllUpdateListeners();
+		mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+			@Override
+			public void onAnimationUpdate(ValueAnimator animation) {
+				if (from < to) {
+					mAnimatedRect.left = (float) animation.getAnimatedValue();
+				} else {
+					mAnimatedRect.right = (float) animation.getAnimatedValue();
+				}
+				invalidate();
+			}
+		});
+
+		if (from < to) {
+			mAnimator.setFloatValues(getLeftSide(from), getLeftSide(to));
+		} else {
+			mAnimator.setFloatValues(getRightSide(from), getRightSide(to));
+		}
+
+		mAnimator.start();
+	}
+
+	private int getLeftSide(int index) {
+		return index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize / 2;
+	}
+
+	private int getRightSide(int index) {
+		return index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize + mIndicatorSize / 2;
 	}
 
 }
