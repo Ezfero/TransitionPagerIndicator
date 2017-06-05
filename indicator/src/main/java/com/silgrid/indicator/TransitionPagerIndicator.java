@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -29,10 +28,8 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 	private boolean mAttached;
 
-	private Paint mActivePaint;
-	private Paint mInactivePaint;
+	private Drawer mDrawer;
 	private ViewPager mViewPager;
-
 	private RectF mAnimatedRect = new RectF();
 	private ValueAnimator mAnimator = new ValueAnimator();
 
@@ -128,16 +125,7 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 	@Override
 	protected void onDraw(Canvas canvas) {
-		int cy = canvas.getHeight() / 2;
-
-		for (int i = 0; i < mPagerAmount; ++i) {
-			Paint p = i == mActivePage ? mActivePaint : mInactivePaint;
-			canvas.drawCircle(getLeftSide(i) + mIndicatorSize / 2, cy, mIndicatorSize / 2, p);
-		}
-
-		if (mAnimatedRect.left != 0 || mAnimatedRect.right != 0) {
-			canvas.drawRoundRect(mAnimatedRect, mIndicatorSize / 2, mIndicatorSize / 2, mActivePaint);
-		}
+		mDrawer.draw(canvas);
 	}
 
 	@Override
@@ -149,6 +137,9 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 	@Override
 	public void onAdapterChanged(@NonNull ViewPager viewPager, @Nullable PagerAdapter oldAdapter, @Nullable PagerAdapter newAdapter) {
 		mPagerAmount = newAdapter == null ? 0 : newAdapter.getCount();
+		if (mDrawer != null) {
+			mDrawer.setPagesAmount(mPagerAmount);
+		}
 		requestLayout();
 	}
 
@@ -168,6 +159,10 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 		if (positionOffsetPixels == 0) {
 			endTransition(mPreviousActivePage, mActivePage);
+			return;
+		}
+
+		if (fromIndex >= mPagerAmount || fromIndex < 0) {
 			return;
 		}
 
@@ -195,6 +190,23 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 		}
 	}
 
+	public int getSelectedIndex() {
+		return mActivePage;
+	}
+
+
+	private int getLeftSide(int index) {
+		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize);
+	}
+
+	private int getRightSide(int index) {
+		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize;
+	}
+
+	private RectF getAnimatedRect() {
+		return mAnimatedRect;
+	}
+
 	public void setViewPager(ViewPager viewPager) {
 		mViewPager = viewPager;
 
@@ -220,24 +232,19 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 				mIndicatorSize = a.getDimensionPixelSize(R.styleable.TransitionPagerIndicator_indicatorSize,
 						(int) (8 * getResources().getDisplayMetrics().density));
 				mIndicatorColor = a.getColor(R.styleable.TransitionPagerIndicator_indicatorColor, Color.WHITE);
+
+				int drawerType = a.getInt(R.styleable.TransitionPagerIndicator_indicatorStyle, 0);
+				mDrawer = DrawerFactory.create(drawerType, mPagerAmount, mIndicatorColor, mIndicatorSize, mCallback);
 			} finally {
 				a.recycle();
 			}
 		} else {
 			mIndicatorSize = (int) (8 * getResources().getDisplayMetrics().density);
 			mIndicatorColor = Color.WHITE;
+			mDrawer = new CircleDrawer(mPagerAmount, mIndicatorColor, mIndicatorSize, mCallback);
 		}
 
 		mIndicatorsPadding = (int) (15 * getResources().getDisplayMetrics().density);
-
-		mActivePaint = new Paint();
-		mActivePaint.setAntiAlias(true);
-		mActivePaint.setColor(mIndicatorColor);
-
-		mInactivePaint = new Paint();
-		mInactivePaint.setAntiAlias(true);
-		mInactivePaint.setColor(mIndicatorColor);
-		mInactivePaint.setAlpha(100);
 	}
 
 	private void setupPagerCallbacks(ViewPager pager) {
@@ -278,14 +285,6 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 		mAnimator.start();
 	}
 
-	private int getLeftSide(int index) {
-		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize);
-	}
-
-	private int getRightSide(int index) {
-		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize;
-	}
-
 	private int getOffset() {
 		int width = mPagerAmount * (mIndicatorSize + mIndicatorsPadding) + getPaddingLeft() + getPaddingRight();
 		int measuredWidth = getMeasuredWidth();
@@ -296,4 +295,25 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 		return (measuredWidth - width) / 2;
 	}
 
+	private Drawer.Callback mCallback = new Drawer.Callback() {
+		@Override
+		public int getActivePage() {
+			return getSelectedIndex();
+		}
+
+		@Override
+		public int getLeftSide(int index) {
+			return TransitionPagerIndicator.this.getLeftSide(index);
+		}
+
+		@Override
+		public int getRightSide(int index) {
+			return TransitionPagerIndicator.this.getRightSide(index);
+		}
+
+		@Override
+		public RectF getAnimatedRect() {
+			return TransitionPagerIndicator.this.getAnimatedRect();
+		}
+	};
 }

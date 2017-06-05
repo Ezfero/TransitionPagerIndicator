@@ -3,5 +3,9 @@
 	<declare-styleable name="TransitionPagerIndicator">
 		<attr name="indicatorColor" format="color" />
 		<attr name="indicatorSize" format="dimension" />
+		<attr name="indicatorStyle" format="enum">
+			<enum name="circle" value="0" />
+			<enum name="square" value="1" />
+		</attr>
 	</declare-styleable>
 </resources>
