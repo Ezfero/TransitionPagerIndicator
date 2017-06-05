@@ -158,7 +158,9 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 				: fromIndex - 1;
 
 		if (positionOffsetPixels == 0) {
-			endTransition(mPreviousActivePage, mActivePage);
+			if (mPreviousScrollOffset != 0) {
+				endTransition(mPreviousActivePage, mActivePage);
+			}
 			return;
 		}
 
