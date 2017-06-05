@@ -7,6 +7,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
@@ -80,6 +83,25 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 	}
 
 	@Override
+	protected Parcelable onSaveInstanceState() {
+		Bundle bundle = new Bundle();
+		bundle.putParcelable("superState", super.onSaveInstanceState());
+		bundle.putInt("activePage", mActivePage);
+		return bundle;
+	}
+
+	@Override
+	protected void onRestoreInstanceState(Parcelable state) {
+		if (state instanceof Bundle) {
+			Bundle bundle = (Bundle) state;
+			mActivePage = bundle.getInt("activePage");
+			state = bundle.getParcelable("superState");
+		}
+
+		super.onRestoreInstanceState(state);
+	}
+
+	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		int widthMode = MeasureSpec.getMode(widthMeasureSpec);
 		int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -110,13 +132,18 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 		for (int i = 0; i < mPagerAmount; ++i) {
 			Paint p = i == mActivePage ? mActivePaint : mInactivePaint;
-			canvas.drawCircle(i * (mIndicatorsPadding + mIndicatorSize) + mIndicatorsPadding / 2,
-					cy, mIndicatorSize / 2, p);
+			canvas.drawCircle(getLeftSide(i) + mIndicatorSize / 2, cy, mIndicatorSize / 2, p);
 		}
 
 		if (mAnimatedRect.left != 0 || mAnimatedRect.right != 0) {
-			canvas.drawOval(mAnimatedRect, mActivePaint);
+			canvas.drawRoundRect(mAnimatedRect, mIndicatorSize / 2, mIndicatorSize / 2, mActivePaint);
 		}
+	}
+
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		mAnimatedRect.top = h / 2 - mIndicatorSize / 2;
+		mAnimatedRect.bottom = mAnimatedRect.top + mIndicatorSize;
 	}
 
 	@Override
@@ -132,22 +159,19 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 			return;
 		}
 
-			int fromIndex = positionOffsetPixels > mPreviousScrollOffset
-					? position
-					: position + 1;
-			int toIndex = positionOffsetPixels > mPreviousScrollOffset
-					? fromIndex + 1
-					: fromIndex - 1;
+		int fromIndex = positionOffsetPixels > mPreviousScrollOffset
+				? position
+				: position + 1;
+		int toIndex = positionOffsetPixels > mPreviousScrollOffset
+				? fromIndex + 1
+				: fromIndex - 1;
 
 		if (positionOffsetPixels == 0) {
-			mPreviousScrollOffset = -1;
 			endTransition(mPreviousActivePage, mActivePage);
 			return;
 		}
 
 		mAnimator.cancel();
-		mAnimatedRect.top = 0;
-		mAnimatedRect.bottom = mAnimatedRect.top + mIndicatorSize;
 		if (fromIndex < toIndex) {
 			mAnimatedRect.left = getLeftSide(fromIndex);
 			mAnimatedRect.right = getRightSide(fromIndex) + (getRightSide(toIndex) - getRightSide(fromIndex)) * positionOffset;
@@ -177,6 +201,14 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 		if (mAttached) {
 			setupPagerCallbacks(viewPager);
 		}
+	}
+
+	public void setIndicatorSize(int indicatorSize) {
+		mIndicatorSize = indicatorSize;
+	}
+
+	public void setIndicatorColor(@ColorInt int indicatorColor) {
+		mIndicatorColor = indicatorColor;
 	}
 
 	private void setupParams(AttributeSet attrs) {
@@ -210,12 +242,11 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 	private void setupPagerCallbacks(ViewPager pager) {
 		pager.addOnAdapterChangeListener(this);
+		pager.addOnPageChangeListener(this);
 
 		if (pager.getAdapter() != null) {
 			onAdapterChanged(pager, null, pager.getAdapter());
 		}
-
-		pager.addOnPageChangeListener(this);
 	}
 
 	private void removePagerCallbacks(ViewPager pager) {
@@ -248,11 +279,21 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 	}
 
 	private int getLeftSide(int index) {
-		return index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize / 2;
+		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize);
 	}
 
 	private int getRightSide(int index) {
-		return index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize + mIndicatorSize / 2;
+		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize) + mIndicatorSize;
+	}
+
+	private int getOffset() {
+		int width = mPagerAmount * (mIndicatorSize + mIndicatorsPadding) + getPaddingLeft() + getPaddingRight();
+		int measuredWidth = getMeasuredWidth();
+		if (width == measuredWidth) {
+			return 0;
+		}
+
+		return (measuredWidth - width) / 2;
 	}
 
 }
