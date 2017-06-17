@@ -20,11 +20,29 @@ abstract class Drawer {
 	protected Paint mInactivePaint;
 	protected Callback mCallback;
 
+	abstract void draw(Canvas canvas);
+
 	public Drawer(int pagesAmount, int indicatorColor, int indicatorSize, Callback callback) {
 		mIndicatorSize = indicatorSize;
 		mPagesAmount = pagesAmount;
 		mCallback = callback;
 
+		createPaint(indicatorColor);
+	}
+
+	public void setPagesAmount(int pagesAmount) {
+		mPagesAmount = pagesAmount;
+	}
+
+	public void setIndicatorSize(int indicatorSize) {
+		mIndicatorSize = indicatorSize;
+	}
+
+	public void setIndicatorColor(int indicatorColor) {
+		createPaint(indicatorColor);
+	}
+
+	private void createPaint(int indicatorColor) {
 		mActivePaint = new Paint();
 		mActivePaint.setAntiAlias(true);
 		mActivePaint.setColor(indicatorColor);
@@ -34,10 +52,4 @@ abstract class Drawer {
 		mInactivePaint.setColor(indicatorColor);
 		mInactivePaint.setAlpha(100);
 	}
-
-	public void setPagesAmount(int pagesAmount) {
-		mPagesAmount = pagesAmount;
-	}
-
-	abstract void draw(Canvas canvas);
 }

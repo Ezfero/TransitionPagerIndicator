@@ -7,6 +7,8 @@ class DrawerFactory {
 				return new CircleDrawer(pagesAmount, indicatorColor, indicatorSize, callback);
 			case 1:
 				return new SquareDrawer(pagesAmount, indicatorColor, indicatorSize, callback);
+			case 2:
+				return new DiamondDrawer(pagesAmount, indicatorColor, indicatorSize, callback);
 			default:
 				return new CircleDrawer(pagesAmount, indicatorColor, indicatorSize, callback);
 		}

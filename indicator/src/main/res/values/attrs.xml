@@ -6,6 +6,7 @@
 		<attr name="indicatorStyle" format="enum">
 			<enum name="circle" value="0" />
 			<enum name="square" value="1" />
+			<enum name="diamond" value="2" />
 		</attr>
 	</declare-styleable>
 </resources>

@@ -196,6 +196,34 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 		return mActivePage;
 	}
 
+	public void setViewPager(ViewPager viewPager) {
+		mViewPager = viewPager;
+
+		if (mAttached) {
+			setupPagerCallbacks(viewPager);
+		}
+	}
+
+	public void setIndicatorSize(int indicatorSize) {
+		mIndicatorSize = indicatorSize;
+		if (mDrawer != null) {
+			mDrawer.setIndicatorSize(indicatorSize);
+		}
+		invalidate();
+	}
+
+	public void setIndicatorColor(@ColorInt int indicatorColor) {
+		mIndicatorColor = indicatorColor;
+		if (mDrawer != null) {
+			mDrawer.setIndicatorColor(indicatorColor);
+		}
+		invalidate();
+	}
+
+	public void setIndicatorStyle(PagerStyle style) {
+		mDrawer = DrawerFactory.create(style.ordinal(), mPagerAmount, mIndicatorColor, mIndicatorSize, mCallback);
+		invalidate();
+	}
 
 	private int getLeftSide(int index) {
 		return getOffset() + index * (mIndicatorsPadding + mIndicatorSize);
@@ -207,22 +235,6 @@ public class TransitionPagerIndicator extends View implements ViewPager.OnAdapte
 
 	private RectF getAnimatedRect() {
 		return mAnimatedRect;
-	}
-
-	public void setViewPager(ViewPager viewPager) {
-		mViewPager = viewPager;
-
-		if (mAttached) {
-			setupPagerCallbacks(viewPager);
-		}
-	}
-
-	public void setIndicatorSize(int indicatorSize) {
-		mIndicatorSize = indicatorSize;
-	}
-
-	public void setIndicatorColor(@ColorInt int indicatorColor) {
-		mIndicatorColor = indicatorColor;
 	}
 
 	private void setupParams(AttributeSet attrs) {
