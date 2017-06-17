@@ -13,7 +13,7 @@ maven {
 	
 In your app-level build.gradle add this line inside ```dependencies``` block:<br/>
 ```
-compile 'com.silgrid:indicator:0.1.1'
+compile 'com.silgrid:indicator:0.1.2'
 ```
 	
 	
@@ -27,6 +27,7 @@ Inside your xml layout file, add<br/>
 		android:layout_marginBottom="50dp"
 		app:indicatorColor="#000000"
 		app:indicatorSize="10dp"
+		app:indicatorStyle="square"
 		/>
 ```
 
@@ -42,5 +43,5 @@ You can customize indicator with these properties from xml:
 ```
 indicatorColor - set color of the indicator
 indicatorSize - set size of the indicator
-indicatorStyle - set style of indicator. Could be one of {circle, square}
+indicatorStyle - set style of indicator. Could be one of {circle, square, diamond}
 ```
