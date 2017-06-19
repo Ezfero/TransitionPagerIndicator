@@ -7,7 +7,7 @@ A simple library that provides ViewPager indication with nice and smooth animati
 To add library to your project, paste the next lines to your upper-level build.gradle, inside ```repositories``` block:<br/>
 ```
 maven {
-	url  "http://dl.bintray.com/ezfero/silgrid"
+	jcenter()
 }
 ```
 	
