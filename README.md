@@ -4,11 +4,9 @@ A simple library that provides ViewPager indication with nice and smooth animati
 
 ![preview](http://i.imgur.com/DUPsdgq.gif)
 
-To add library to your project, paste the next lines to your upper-level build.gradle, inside ```repositories``` block:<br/>
+To add library to your project, jcenter repository link to your upper-level build.gradle, inside ```repositories``` block:<br/>
 ```
-maven {
-	jcenter()
-}
+jcenter()
 ```
 	
 In your app-level build.gradle add this line inside ```dependencies``` block:<br/>
